@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name            Hangouts Design Theme for Google Chat Web
 // @name:de         Hangouts Design Theme für Google Chat Web
-// @version         1.0.0
+// @version         1.0.1
 // @description     Use Google Chat Web with the old Hangouts Design Theme
 // @description:de  Google Chat Web mit dem alten Hangouts-Design-Theme verwenden
+// @icon            https://ssl.gstatic.com/ui/v1/icons/mail/images/favicon_chat_r2.ico
 // @author          TalkLounge (https://github.com/TalkLounge)
 // @namespace       https://github.com/TalkLounge/hangouts-design-theme-for-google-chat-web
 // @license         MIT
@@ -212,7 +213,7 @@
             }
 
             .wl {
-                background: inherit
+                background: inherit;
             }
 
             #Layer_1 {
@@ -225,12 +226,16 @@
 
         function invertColors() {
             insertStyle(`
-            .gb_pa svg, .gb_Hc svg, .gb_3c .gb_5d, .gb_Sc .gb_5d {
-                color: white
+            .gb_Ia svg, .gb_Qc svg, .gb_cd .gb_ld, .gb_2c .gb_ld {
+                color: white !important;
             }
 
-            .Yc {
-                color: white
+            .Yb.bax.bCd {
+                background: none;
+            }
+
+            .Yc.bax {
+                color: white;
             }
             `);
 
@@ -239,12 +244,12 @@
 
         function changeDetails() {
             insertStyle(`
-            .AO {
-                display: none
+            .nH.bkK.nn {
+                display: none;
             }
 
             #aso_search_form_anchor {
-                display: none
+                display: none;
             }
 
             .aeN {
@@ -331,7 +336,7 @@
         //console.log(window.location.href, window.top === window.self);
         if (window.location.href.startsWith("https://mail.google.com/chat/u/0/") && window.top == window.self) { // Main Page
             if (!$.cookie("reload")) { // Must be loaded without Cache otherwise the IFrames will not be injected
-                $.cookie("reload", "true", { expires: new Date(new Date().getTime() + 5 * 1000), path: "/" });
+                $.cookie("reload", "true", { expires: new Date(new Date().getTime() + 10 * 1000), path: "/" });
                 $.ajax({
                     url: window.location.href,
                     headers: {
@@ -346,7 +351,7 @@
                 $.removeCookie("reload");
             }
 
-            interval = window.setInterval(initMain, 250);
+            interval = window.setInterval(initMain, 500);
         } else if (window.location.href.startsWith("https://chat.google.com/u/0/mole/world") && window.top != window.self) { // IFrame Users
             interval = window.setInterval(initFrameUsers, 500);
         } else if (window.location.href.startsWith("https://chat.google.com/u/0/") && window.top != window.self && window.location.href.indexOf("id=rooms") != -1) { // IFrame Groups
