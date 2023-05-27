@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Hangouts Design Theme for Google Chat Web
 // @name:de         Hangouts Design Theme für Google Chat Web
-// @version         1.0.1
+// @version         1.0.2
 // @description     Use Google Chat Web with the old Hangouts Design Theme
 // @description:de  Google Chat Web mit dem alten Hangouts-Design-Theme verwenden
 // @icon            https://ssl.gstatic.com/ui/v1/icons/mail/images/favicon_chat_r2.ico
@@ -11,12 +11,13 @@
 // @match           https://mail.google.com/chat/*
 // @match           https://chat.google.com/u/0/*
 // @require         https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js
-// @require         https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js
-// @grant           none
+// @grant           GM.setValue
+// @grant           GM.getValue
+// @grant           GM.deleteValue
 // ==/UserScript==
 
 (function ($, undefined) { // Safe jQuery import, Thanks to https://stackoverflow.com/a/29363547
-    $(function () {
+    $(async function () {
         const BACKGROUNDS = [
             { // Bird
                 src: "https://www.gstatic.com/chat/hangouts/bg/f466d78212377293b5b745200add730f-stclair.jpg",
@@ -285,7 +286,7 @@
                     $(this).parent().parent().parent().parent().css("width", "21.33vw");
                     $(this).css("height", "92.7vh");
                 });
-            }, 100);
+            }, 500);
         }
 
         function initFrameUsers() {
@@ -335,23 +336,24 @@
         // Start injected function
         //console.log(window.location.href, window.top === window.self);
         if (window.location.href.startsWith("https://mail.google.com/chat/u/0/") && window.top == window.self) { // Main Page
-            if (!$.cookie("reload")) { // Must be loaded without Cache otherwise the IFrames will not be injected
-                $.cookie("reload", "true", { expires: new Date(new Date().getTime() + 10 * 1000), path: "/" });
-                $.ajax({
-                    url: window.location.href,
-                    headers: {
-                        "Pragma": "no-cache",
-                        "Expires": -1,
-                        "Cache-Control": "no-cache"
-                    }
-                }).done(function () {
-                    window.location.reload(true);
-                });
+            if (! await GM.getValue("reload") || new Date().getTime() - await GM.getValue("reload") > 10 * 1000) { // Must be loaded without Cache otherwise the IFrames will not be injected
+                await GM.setValue("reload", new Date().getTime());
+                window.setTimeout(() => {
+                    $.ajax({
+                        url: window.location.href,
+                        headers: {
+                            "Pragma": "no-cache",
+                            "Expires": -1,
+                            "Cache-Control": "no-cache"
+                        }
+                    }).done(function () {
+                        window.location.reload(true);
+                    });
+                }, 500);
             } else {
-                $.removeCookie("reload");
+                await GM.deleteValue("reload");
+                interval = window.setInterval(initMain, 500);
             }
-
-            interval = window.setInterval(initMain, 500);
         } else if (window.location.href.startsWith("https://chat.google.com/u/0/mole/world") && window.top != window.self) { // IFrame Users
             interval = window.setInterval(initFrameUsers, 500);
         } else if (window.location.href.startsWith("https://chat.google.com/u/0/") && window.top != window.self && window.location.href.indexOf("id=rooms") != -1) { // IFrame Groups
