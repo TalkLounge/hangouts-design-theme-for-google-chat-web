@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Hangouts Design Theme for Google Chat Web
 // @name:de         Hangouts Design Theme für Google Chat Web
-// @version         1.0.2
+// @version         1.0.3
 // @description     Use Google Chat Web with the old Hangouts Design Theme
 // @description:de  Google Chat Web mit dem alten Hangouts-Design-Theme verwenden
 // @icon            https://ssl.gstatic.com/ui/v1/icons/mail/images/favicon_chat_r2.ico
@@ -213,10 +213,12 @@
                 vertical-align: middle;
             }
 
+            /* Background */
             .wl {
                 background: inherit;
             }
 
+            /* Sidebar Icon */
             #Layer_1 {
                 display: none;
             }
@@ -227,14 +229,17 @@
 
         function invertColors() {
             insertStyle(`
-            .gb_Ia svg, .gb_Qc svg, .gb_cd .gb_ld, .gb_2c .gb_ld {
+            /* Navbar Icons */
+            .gb_Na svg, .gb_Rc svg, .gb_dd .gb_ld, .gb_3c .gb_ld {
                 color: white !important;
             }
 
+            /* Online Status */
             .Yb.bax.bCd {
                 background: none;
             }
 
+            /* Online Status */
             .Yc.bax {
                 color: white;
             }
@@ -245,14 +250,17 @@
 
         function changeDetails() {
             insertStyle(`
-            .nH.bkK.nn {
+            /* Welcome Screen */
+            .nH.bkK {
                 display: none;
             }
 
+            /* Search Bar */
             #aso_search_form_anchor {
                 display: none;
             }
 
+            /* Chats & Groups Nav */
             .aeN {
                 max-width: none !important;
             }
