@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Hangouts Design Theme for Google Chat Web
 // @name:de         Hangouts Design Theme für Google Chat Web
-// @version         1.0.3
+// @version         1.0.4
 // @description     Use Google Chat Web with the old Hangouts Design Theme
 // @description:de  Google Chat Web mit dem alten Hangouts-Design-Theme verwenden
 // @icon            https://ssl.gstatic.com/ui/v1/icons/mail/images/favicon_chat_r2.ico
@@ -135,7 +135,7 @@
         const TRANSLATIONS = { en: "Photo by", de: "Foto von" };
         const LANG = navigator.language || navigator.userLanguage;
         const TRANSLATION = TRANSLATIONS[LANG] || TRANSLATIONS["en"];
-        let interval;
+        let intervalMain, intervalSidebarFrame;
 
         function insertStyle(styles) {
             const html = `
@@ -148,9 +148,16 @@
             $("head").append(child);
         }
 
+        function insertHTML(parent, html) {
+            html = html.replace(/>\s+</g, '><').trim(); // Clean up formatted html, Thanks to https://stackoverflow.com/a/27841683
+            const child = $.parseHTML(html);
+            $(parent).prepend(child);
+        }
+
         function insertBackground() {
             const ran = Math.floor(Math.random() * (BACKGROUNDS.length - 1));
-            const html = `
+
+            insertHTML("body", `
             <div class="HDfGC-bg">
                 <div class="HDfGC-bg-img"></div>
                 <div class="HDfGC-bg-grad"></div>
@@ -160,11 +167,7 @@
                         <div class="HDfGC-bg-author-name">${TRANSLATION} ${BACKGROUNDS[ran].author}</div>
                     </div>
                 </div>
-            </div>
-            `.replace(/>\s+</g, '><').trim(); // Clean up formatted html, Thanks to https://stackoverflow.com/a/27841683
-
-            const child = $.parseHTML(html);
-            $("body").prepend(child);
+            </div>`);
 
             insertStyle(`
             .HDfGC-bg {
@@ -230,8 +233,8 @@
         function invertColors() {
             insertStyle(`
             /* Navbar Icons */
-            .gb_Na svg, .gb_Rc svg, .gb_dd .gb_ld, .gb_3c .gb_ld {
-                color: white !important;
+            .gb_Ja svg, .gb_Nc svg, .gb_9c .gb_hd, .gb_Zc .gb_hd {
+                color: #C8D2DF !important;
             }
 
             /* Online Status */
@@ -249,20 +252,66 @@
         }
 
         function changeDetails() {
+            insertHTML(".nH.bkK", `
+            <button class="HDfGC-x">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect width="16" height="16" fill="none"></rect>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M4.3584 3.15631L3.15632 4.35839L6.79792 8L3.15631 11.6416L4.35839 12.8437L8.00001 9.20208L11.6416 12.8437L12.8437 11.6416L9.20209 8L12.8437 4.35842L11.6416 3.15633L8.00001 6.79792L4.3584 3.15631Z" class="WIVxDf KuRlUd"></path>
+                </svg>
+            </button>`);
+
             insertStyle(`
-            /* Welcome Screen */
+            .HDfGC-x {
+                position: absolute;
+                z-index: 1;
+                right: 4.5rem;
+                top: 2.5rem;
+                background-color: initial;
+                border: none;
+                padding: 0px;
+                cursor: pointer;
+            }
+
+            .HDfGC-x svg {
+                fill: black;
+            }
+
+            /* Main */
             .nH.bkK {
+                margin-left: 4vw;
+                margin-top: 2.99vh;
                 display: none;
+            }
+
+            .nH.bkK > .nH {
+                background-color: initial;
             }
 
             /* Search Bar */
             #aso_search_form_anchor {
-                display: none;
+                background-color: initial;
+            }
+
+            #aso_search_form_anchor input {
+                color: white;
+            }
+
+            #aso_search_form_anchor input::placeholder {
+                color: #C8D2DF
+            }
+
+            #aso_search_form_anchor input::-ms-input-placeholder {
+                color: #C8D2DF
             }
 
             /* Chats & Groups Nav */
             .aeN {
                 max-width: none !important;
+            }
+
+            /* New Chat Button */
+            .T-I-KE {
+                margin-top: 8px;
             }
             `);
 
@@ -274,75 +323,101 @@
             $('[role="navigation"]').css("left", "3.5vw");
         }
 
+        function toggleMain(visible) {
+            if (visible) {
+                $(".nH.bkK").css("display", "block");
+            } else {
+                $(".nH.bkK").css("display", "none");
+            }
+        }
+
         function initMain() {
             if ($("#loading").is(":visible")) { // Stop when not completely loaded
                 return;
             }
 
-            //console.log("--------------initMain()--------------");
+            //console.log("initMain(): Run");
 
-            window.clearInterval(interval);
+            window.clearInterval(intervalMain);
+            //console.log("initMain(): Cleared Interval");
 
             insertBackground();
             invertColors();
             changeDetails();
 
-            $(".dw .no").empty();
-            window.setInterval(() => {
-                $(".dB").each(function () {
-                    $(this).css("width", "20.83vw");
-                    $(this).parent().parent().parent().parent().css("width", "21.33vw");
-                    $(this).css("height", "92.7vh");
+            // Make Main toggable
+
+            window.addEventListener("message", function (e) {
+                if (typeof (e?.data?.toggleMain) != "undefined") {
+                    toggleMain(e?.data?.toggleMain);
+                }
+            });
+
+            $(".HDfGC-x").click(function (e) {
+                toggleMain();
+            });
+
+            $("#aso_search_form_anchor button").each(function () {
+                $(this).click(function (e) {
+                    toggleMain(true);
                 });
-            }, 500);
+            });
+
+            $("#aso_search_form_anchor input").keyup(function (e) {
+                toggleMain(true);
+            });
+
+            // Set IFrame Chats Full Height
+
+            const observer = new MutationObserver(function (mutationList) {
+                mutationList.forEach(function (mutation) {
+                    if (mutation.type == "attributes" && mutation.target.tagName == "IFRAME" && mutation.target.style?.height && parseInt(mutation.target.style.height) > 100 && mutation.target.style.height != "92.7vh") {
+                        $(mutation.target).css("width", "20.83vw");
+                        $(mutation.target).css("height", "92.7vh");
+                        $(mutation.target).parent().parent().parent().parent().css("width", "21.33vw");
+                    }
+                });
+            });
+
+            observer.observe(document.querySelector(".no"), {
+                subtree: true,
+                attributes: true
+            });
+
+            $(".no").empty();
         }
 
-        function initFrameUsers() {
+        function initSidebarFrame() {
             if (!$('[role="list"] [role="listitem"] div').length) { // Stop when not completely loaded
                 return;
             }
 
-            //console.log("--------------initFrameUsers()--------------");
+            //console.log("initFrame(): Run");
 
-            window.clearInterval(interval);
+            window.clearInterval(intervalSidebarFrame);
+            //console.log("initFrame(): Cleared Interval");
+
+            $("#ucc-0").children().each(function () {
+                $(this).click(function (e) {
+                    window.parent.postMessage({ "toggleMain": true }, "*");
+                });
+            });
 
             window.setInterval(() => {
-                $('[role="list"] [role="listitem"]').each(function (index) {
+                $('[role="list"] [role="listitem"]').each(function () {
                     if ($(this).attr("jsaction")) {
                         $(this).removeAttr("jsaction");
                         const elem = $(this).find('div[role="button"][jsaction]').get(0);
-                        $(this).find('[role="link"]').eq(0).click(function (e) {
+                        $(this).find('[role="link"]').children().eq(0).click(function (e) {
+                            e.stopPropagation();
                             elem.click();
                         });
                     }
                 });
-            }, 500);
+            }, 1000);
         }
 
-        function initFrameGroups() {
-            if (!$('[role="list"] [role="listitem"] div').length) { // Stop when not completely loaded
-                return;
-            }
-
-            //console.log("--------------initFrameGroups()--------------");
-
-            window.clearInterval(interval);
-
-            window.setInterval(() => {
-                $('[role="list"] [role="listitem"]').each(function (index) {
-                    if ($(this).attr("jsaction")) {
-                        $(this).removeAttr("jsaction");
-                        const elem = $(this).find('div[role="button"][jsaction]').get(0);
-                        $(this).find('[role="link"]').eq(0).click(function (e) {
-                            elem.click();
-                        });
-                    }
-                });
-            }, 500);
-        }
-
-        // Start injected function
-        //console.log(window.location.href, window.top === window.self);
+        // Start functions
         if (window.location.href.startsWith("https://mail.google.com/chat/u/0/") && window.top == window.self) { // Main Page
             if (! await GM.getValue("reload") || new Date().getTime() - await GM.getValue("reload") > 10 * 1000) { // Must be loaded without Cache otherwise the IFrames will not be injected
                 await GM.setValue("reload", new Date().getTime());
@@ -360,12 +435,10 @@
                 }, 500);
             } else {
                 await GM.deleteValue("reload");
-                interval = window.setInterval(initMain, 500);
+                intervalMain = window.setInterval(initMain, 500);
             }
-        } else if (window.location.href.startsWith("https://chat.google.com/u/0/mole/world") && window.top != window.self) { // IFrame Users
-            interval = window.setInterval(initFrameUsers, 500);
-        } else if (window.location.href.startsWith("https://chat.google.com/u/0/") && window.top != window.self && window.location.href.indexOf("id=rooms") != -1) { // IFrame Groups
-            interval = window.setInterval(initFrameGroups, 500);
+        } else if (window.location.href.startsWith("https://chat.google.com/u/0/frame") && window.top != window.self && window.location.href.indexOf("id=world") != -1) {
+            intervalSidebarFrame = window.setInterval(initSidebarFrame, 500);
         }
     });
 })(window.jQuery.noConflict(true));
