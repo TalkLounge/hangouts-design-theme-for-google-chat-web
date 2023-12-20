@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Hangouts Design Theme for Google Chat Web
 // @name:de         Hangouts Design Theme für Google Chat Web
-// @version         1.0.4
+// @version         1.0.5
 // @description     Use Google Chat Web with the old Hangouts Design Theme
 // @description:de  Google Chat Web mit dem alten Hangouts-Design-Theme verwenden
 // @icon            https://ssl.gstatic.com/ui/v1/icons/mail/images/favicon_chat_r2.ico
@@ -233,7 +233,7 @@
         function invertColors() {
             insertStyle(`
             /* Navbar Icons */
-            .gb_Ja svg, .gb_Nc svg, .gb_9c .gb_hd, .gb_Zc .gb_hd {
+            .gb_Ka svg, .gb_Oc svg, .gb_ad .gb_id, .gb_0c .gb_id {
                 color: #C8D2DF !important;
             }
 
@@ -407,7 +407,7 @@
                 $('[role="list"] [role="listitem"]').each(function () {
                     if ($(this).attr("jsaction")) {
                         $(this).removeAttr("jsaction");
-                        const elem = $(this).find('div[role="button"][jsaction]').get(0);
+                        const elem = $(this).find('button[jsaction]').get(0);
                         $(this).find('[role="link"]').children().eq(0).click(function (e) {
                             e.stopPropagation();
                             elem.click();
